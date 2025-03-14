@@ -20,9 +20,15 @@ jobs:
 
       - name: Debug - Check Secrets Availability
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then echo "DOCKER_USERNAME is missing!"; exit 1; fi
-          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then echo "DOCKER_PASSWORD is missing!"; exit 1; fi
-          echo "All required secrets are set."
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then 
+            echo "❌ DOCKER_USERNAME is missing!" 
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then 
+            echo "❌ DOCKER_PASSWORD is missing!" 
+            exit 1
+          fi
+          echo "✅ All required secrets are set."
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -38,6 +44,7 @@ jobs:
 
       - name: Publish Image to Docker Hub
         run: docker push sumitdev99/reactjs-app:latest
+
       - name: Debug - Check Build Directory
         run: ls -la ./dist || echo "⚠️ dist folder is missing!"
 
@@ -45,9 +52,11 @@ jobs:
     needs: build
     runs-on: aws-ec2
     steps:
-      - name: Pull image from docker hub
-        run: docker pull sumitdev99/reactjs-app:latest
+      - name: Pull Image from Docker Hub
+        run: sudo docker pull sumitdev99/reactjs-app:latest
+
       - name: Delete Old Container
-        run: docker rm -f reactContainer
-      - name: Run docker container
-        run: docker run -d -p 3000:80 --name reactContainer sumitdev99/reactjs-app
+        run: sudo docker rm -f reactContainer || true
+
+      - name: Run Docker Container
+        run: sudo docker run -d -p 3000:80 --name reactContainer sumitdev99/reactjs-app
