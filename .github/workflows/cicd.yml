@@ -11,20 +11,72 @@ jobs:
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
+
+      - name: Enable Debug Logging
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+
+      - name: Debug - Check Docker Version
+        run: docker --version
+
+      - name: Debug - Check Secrets Availability
+        run: |
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then echo "DOCKER_USERNAME is missing!"; exit 1; fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then echo "DOCKER_PASSWORD is missing!"; exit 1; fi
+          echo "All required secrets are set."
+
       - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Debug - List Files in Directory
+        run: ls -la
+
       - name: Build Docker Image
         run: docker build -t sumitdev99/reactjs-app .
-      - name: Publish image to docker hub
+
+      - name: Debug - Show Built Docker Images
+        run: docker images
+
+      - name: Publish Image to Docker Hub
         run: docker push sumitdev99/reactjs-app:latest
 
   deploy:
     needs: build
-    runs-on: aws-ec2
+    runs-on: ubuntu-latest
     steps:
-      - name: Pull image from docker hub
-        run: docker pull sumitdev99/reactjs-app:latest
-      - name: Delete Old Container
-        run: docker rm -f reactContainer
-      - name: Run docker container
-        run: docker run -d -p 3000:80 --name reactContainer sumitdev99/reactjs-app
+      - name: Debug - Check EC2 Secrets
+        run: |
+          if [ -z "${{ secrets.EC2_HOST }}" ]; then echo "EC2_HOST is missing!"; exit 1; fi
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then echo "EC2_SSH_KEY is missing!"; exit 1; fi
+          echo "EC2 secrets are set."
+
+      - name: Debug - Check SSH Key Format
+        run: echo "${{ secrets.EC2_SSH_KEY }}" | head -n 3
+
+      - name: SSH into EC2 and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -x  # Enables debugging in the SSH session
+
+            echo "Checking Docker version on EC2..."
+            docker --version
+
+            echo "Logging in to Docker Hub..."
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+
+            echo "Pulling latest Docker image..."
+            docker pull sumitdev99/reactjs-app:latest
+
+            echo "Stopping existing container (if running)..."
+            docker stop reactContainer || true
+
+            echo "Removing old container (if exists)..."
+            docker rm reactContainer || true
+
+            echo "Running new container..."
+            docker run -d -p 3000:80 --name reactContainer sumitdev99/reactjs-app
+
+            echo "Deployment completed!"
