@@ -72,7 +72,6 @@ function App() {
       {/* Contact Section */}
       <section id='contact' className='contact'>
         <h2>Get in Touch</h2>
-        <p>Have an idea? Want to collaborate? Let's talk! 🚀</p>
         <a href='mailto:contact@example.com' className='contact-button'>
           Say Hello 👋
         </a>
