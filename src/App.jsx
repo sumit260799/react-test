@@ -5,7 +5,7 @@ function App() {
     <div className='app-container'>
       {/* Header */}
       <header className='header'>
-        <h1>Welcome to My World 🌍</h1>
+        <h1>Sumit</h1>
         <nav>
           <ul>
             <li>
