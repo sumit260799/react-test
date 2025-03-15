@@ -1,5 +1,6 @@
 # Step 1: Use Node.js as the build environment
-FROM node:18 AS build
+FROM node:18-alpine AS build
+
 WORKDIR /app
 
 # Copy package.json and package-lock.json first

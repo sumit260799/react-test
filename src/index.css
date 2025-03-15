@@ -19,8 +19,8 @@ html {
 
 /* Header */
 .header {
-  background: #333;
-  color: white;
+  background: #ebe408;
+  color: rgb(0, 0, 0);
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
